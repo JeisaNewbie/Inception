@@ -1,0 +1,47 @@
+version: '3'
+
+volumes:
+  wpvolume:
+  dbvolume:
+
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: requirements/nginx/Dockerfile
+    volumes:
+      - type: volume
+        source: wpvolume
+        target: /var/www/html
+    ports:
+      - "443:443"
+    env_file:
+      - ./.env
+
+  wordpress:
+    tty: true
+    build:
+      context: .
+      dockerfile: requirements/wordpress/Dockerfile
+    volumes:
+      - type: volume
+        source: wpvolume
+        target: /var/www/html
+    ports:
+      - "9000:9000"
+    env_file:
+      - ./.env
+
+  mariadb:
+    tty: true
+    build:
+      context: .
+      dockerfile: requirements/mariadb/Dockerfile
+    volumes:
+    - type: volume
+      source: dbvolume
+      target: /var/lib/mysql
+    ports:
+      - "3306:3306"
+    env_file:
+      - ./.env
