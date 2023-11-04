@@ -1,19 +1,17 @@
-FROM alpine:3.17
+FROM debian:oldstable
 
-RUN apk update && apk upgrade \
-    && apk add mariadb mariadb-client curl \
-	&& apk add openrc && apk update && apk upgrade \
-	&& rm -rf /var/cache/apk/*
+RUN apt-get update -y \ 
+	&& apt-get upgrade -y \
+    && apt-get install -y curl mariadb-server procps gosu
 
-COPY ./requirements/mariadb/conf/my.cnf /etc/
-COPY ./requirements/mariadb/conf/mariadb-server.cnf /etc/my.cnf.d/
-COPY ./requirements/mariadb/tools/* .
-# COPY ./conf/my.cnf /etc/
-# COPY ./tools/* .
+COPY ./requirements/mariadb/conf/50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf
+COPY ./requirements/mariadb/tools/* ./
+
 VOLUME ["/var/lib/mysql"]
 
+RUN mkdir -p /var/run/mysqld && chown -R mysql:mysql /var/lib/mysql /var/run/mysqld
 RUN chmod +x start_mariadb.sh
-RUN chmod 644 /etc/my.cnf
 
 EXPOSE 3306
-ENTRYPOINT sh start_mariadb.sh
+
+ENTRYPOINT ["/bin/bash", "start_mariadb.sh"]

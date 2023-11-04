@@ -1,30 +1,31 @@
-FROM alpine:3.17
+FROM debian:oldstable
 
-RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
-RUN apk update && apk upgrade \
-    && apk add php-fpm php82 fcgi php82-cgi wget curl \
-	&& apk add php-cli php-mysqli php-mbstring php-xml \
-	&& apk add mariadb-client \
-	&& rm -rf /var/cache/apk/*
+RUN apt-get update -y && apt-get upgrade -y \
+	&& apt-get install -y php7.4-fpm php7.4 wget curl \
+	&& apt-get install -y php-cli php-mysql php-mbstring php-xml sendmail
 
-RUN wget https://wordpress.org/latest.tar.gz \
-    && tar -xvf latest.tar.gz
 
-WORKDIR /var/www/html
+RUN mkdir /run/php
 
-RUN mv /wordpress/* /var/www/html \
-    && adduser -S -D -u 82 -s /sbin/nologin -h /var/www -G www-data www-data \
+
+RUN wget https://wordpress.org/latest.tar.gz \ 
+	&& tar -xvf latest.tar.gz \
+	&& mkdir -p /var/www/html/ \
+	&& mv wordpress/* /var/www/html/ \
 	&& chown -R www-data:www-data /var/www/html \
-	&& mv ./wp-config-sample.php wp-config.php \
-    && rm -r /wordpress /latest.tar.gz
+	&& rm -r /wordpress latest.tar.gz
 
-WORKDIR /
-COPY ./requirements/wordpress/conf/wp-config.php /var/www/html
-COPY ./requirements/wordpress/conf/www.conf /etc/php81/php-fpm.d/
-COPY ./requirements/wordpress/conf/my.cnf /etc/
-# COPY ./conf/www.conf /etc/php81/php-fpm.d/
-# COPY ./conf/wp-config.php ./
+COPY ./requirements/wordpress/conf/wp-config.php /var/www/html/wp-config.php
+COPY ./requirements/wordpress/conf/www.conf /etc/php/7.4/fpm/pool.d/www.conf
+# COPY ./requirements/wordpress/conf/php.ini /etc/php/7.4/fpm/php.ini
 
-VOLUME ["/var/lib/mysql"]
+# # COPY ./requirements/wordpress/conf/my.cnf /etc/
+# COPY ./conf/wp-config.php /var/www/html
+# COPY ./conf/www.conf /etc/php/7.4/fpm/pool.d/
 
+# COPY ./conf/wp-config.php /var/www/html
+# COPY ./conf/www.conf /etc/php/7.3/fpm/pool.d/
+# # VOLUME ["/var/lib/mysql"]
 EXPOSE 9000
+
+CMD ["/usr/sbin/php-fpm7.4", "-F"]
