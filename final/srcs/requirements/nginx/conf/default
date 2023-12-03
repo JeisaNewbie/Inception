@@ -1,0 +1,27 @@
+server {
+		listen 443 ssl default_server;
+		ssl_protocols  TLSv1.2 TLSv1.3;
+		ssl_certificate /etc/ssl/certs/server.crt;
+		ssl_certificate_key /etc/ssl/private/server_pkey.pem;
+
+		root /var/www/html;
+
+		index index.html index.htm index.nginx-debian.html index.php;
+		# index index.php index.html index.htm;
+
+		server_name _;
+
+		location / {
+				autoindex on;
+				try_files $uri $uri/ wp/index.php$is_args$args;
+				# try_files $uri $uri/ =404;
+		}
+
+		location ~ \.php$ {
+				include snippets/fastcgi-php.conf;
+				# include fastcgi_params;
+		
+				fastcgi_param SCRIPT_FILENAME /var/www/html/$fastcgi_script_name;
+				fastcgi_pass wordpress:9000;
+		}
+}

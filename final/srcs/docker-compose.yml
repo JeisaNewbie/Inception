@@ -1,0 +1,59 @@
+version: '3'
+
+volumes:
+  wpvolume: {}
+  dbvolume: {}
+
+services:
+  mariadb:
+    restart: always
+    build:
+      context: .
+      dockerfile: requirements/mariadb/Dockerfile
+    volumes:
+    - dbvolume:/var/lib/mysql
+    expose:
+      - "3306"
+    env_file:
+      - ./.env
+    networks:
+      - intra
+    tty: true
+  nginx:
+    restart: always
+    build:
+      context: ./requirements/nginx/
+      dockerfile: Dockerfile
+    volumes:
+      - wpvolume:/var/www/html
+    ports:
+      - "443:443"
+    depends_on:
+      - wordpress
+    env_file:
+      - ./.env
+    networks:
+      - intra
+    tty: true
+
+  wordpress:
+    restart: always
+    build:
+      context: ./requirements/wordpress/
+      dockerfile: Dockerfile
+    volumes:
+      - wpvolume:/var/www/html
+    expose:
+      - "9000"
+    depends_on:
+      - mariadb
+    env_file:
+      - ./.env
+    networks:
+      - intra
+    tty: true
+
+
+networks:
+    intra:
+        driver: bridge
